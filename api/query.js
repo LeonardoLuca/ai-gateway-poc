@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
 
   // Lógica principal
   try {
-    const { prompt } = req.body;
+    const { prompt } = req.body.normalize('NFC');
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt é obrigatório.' });
     }
