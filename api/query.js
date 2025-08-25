@@ -1,8 +1,11 @@
-// api/query.js - CÓDIGO DE TESTE TEMPORÁRIO
+// api/query.js - VERSÃO FINAL
 
-// Usamos 'module.exports' para exportar a função
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const cache = new Map();
+
 module.exports = async (req, res) => {
-  // --- Controle de CORS ---
+  // Controle de CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -10,26 +13,40 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  // -------------------------
 
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  // Se a requisição for POST, apenas retorne uma mensagem de sucesso
+  // Lógica principal
   try {
     const { prompt } = req.body;
-    console.log(`[TESTE] Recebido o prompt: ${prompt}`);
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt é obrigatório.' });
+    }
 
-    const responseData = {
-      completion: { content: `[SUCESSO] O backend recebeu seu prompt: "${prompt}"` }
-    };
+    if (cache.has(prompt)) {
+      console.log('CACHE HIT!');
+      return res.status(200).json({ source: 'Cache', ...cache.get(prompt) });
+    }
 
-    return res.status(200).json({ source: 'Backend de Teste', ...responseData });
+    console.log('CACHE MISS! Chamando a API do Gemini...');
+    // Inicializa o cliente do Gemini usando a chave de API da Vercel
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    const responseData = { completion: { content: text } };
+    cache.set(prompt, responseData);
+
+    return res.status(200).json({ source: 'API Externa (Gemini)', ...responseData });
 
   } catch (error) {
-    console.error("[TESTE] Erro:", error);
-    return res.status(500).json({ error: 'Falha no backend de teste.' });
+    console.error("Erro na função da API do Gemini:", error);
+    return res.status(500).json({ error: 'Falha ao processar a requisição.' });
   }
 };
