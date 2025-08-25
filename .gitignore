@@ -1,0 +1,12 @@
+# .gitignore (na raiz)
+
+# Dependências
+node_modules
+frontend/node_modules
+
+# Arquivos de Build
+frontend/build
+
+# Arquivos de ambiente
+.env
+.env.local
