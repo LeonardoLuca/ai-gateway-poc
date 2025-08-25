@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
     console.log('CACHE MISS! Chamando a API do Gemini...');
     // Inicializa o cliente do Gemini usando a chave de API da Vercel
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest"});
     
     const result = await model.generateContent(prompt);
     const response = await result.response;
